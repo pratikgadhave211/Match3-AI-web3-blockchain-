@@ -3,7 +3,7 @@ services:
     name: match3-backend
     env: python
     rootDir: .
-    buildCommand: pip install -r requirements.txt
+    buildCommand: pip install -r backend/requirements.txt
     startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
     autoDeploy: true
     healthCheckPath: /
