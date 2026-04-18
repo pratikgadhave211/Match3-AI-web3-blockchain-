@@ -1,6 +1,9 @@
-const API_BASE_URL =
-  ((import.meta as ImportMeta & { env?: Record<string, string | undefined> }).env?.VITE_API_BASE_URL)?.replace(/\/$/, "") ||
-  "http://127.0.0.1:8000";
+const envBaseUrl = (import.meta as ImportMeta & { env?: Record<string, string | undefined> }).env?.VITE_API_BASE_URL;
+const isLocalHost =
+  typeof window !== "undefined" &&
+  (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+
+const API_BASE_URL = (envBaseUrl || (isLocalHost ? "http://127.0.0.1:8000" : "/api")).replace(/\/$/, "");
 
 export interface ApiResult<T> {
   data: T;

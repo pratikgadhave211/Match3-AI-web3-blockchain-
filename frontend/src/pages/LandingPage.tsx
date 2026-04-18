@@ -1,114 +1,213 @@
-import { useRef } from "react";
+import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+
+const HERO_STATS = [
+  { value: "500+", label: "Active Users" },
+  { value: "10K+", label: "Connections Made" },
+  { value: "95%", label: "Match Success" }
+];
+
+const ORBIT_NODES = [
+  { angle: 0, delay: 0.5, accent: "primary" as const },
+  { angle: 90, delay: 1, accent: "secondary" as const },
+  { angle: 180, delay: 1.5, accent: "primary" as const },
+  { angle: 270, delay: 2, accent: "secondary" as const }
+];
 
 const FEATURES = [
   {
-    title: "AI-powered matchmaking",
+    icon: "psychology",
+    title: "AI-Powered Matching",
     description:
-      "Intelligent matching uses interests, goals, and event context to surface high-synergy connections quickly."
+      "Our proprietary algorithm analyzes skills, goals, and values to find your highest-synergy collaboration opportunities in seconds."
   },
   {
-    title: "On-chain profile registration",
+    icon: "tune",
+    title: "Smart Filtering",
     description:
-      "Participants register profiles directly to the smart contract for transparent and tamper-resistant event identity."
+      "Refine your network with adaptive filters across domain expertise, startup intent, and role alignment for relevant conversations."
   },
   {
-    title: "Verifiable event networking",
+    icon: "mail",
+    title: "Instant Introductions",
     description:
-      "Every registration is linked to a wallet address for auditable attendee credibility and trust-first collaboration."
+      "Generate context-aware AI intros that break the ice instantly and convert mutual interest into meaningful interaction."
+  },
+  {
+    icon: "people",
+    title: "Build Your Network",
+    description:
+      "Track and nurture high-value connections with a premium relationship flow built for founders, builders, and operators."
   }
 ];
 
 export default function LandingPage() {
   const navigate = useNavigate();
-  const featureSectionRef = useRef<HTMLElement | null>(null);
+  const connectionLines = useMemo(() => {
+    const centerX = 300;
+    const centerY = 300;
+    const distance = 150;
 
-  const handleGetStarted = () => {
-    navigate("/register");
-  };
+    return ORBIT_NODES.map((node) => {
+      const radians = (node.angle * Math.PI) / 180;
+      return {
+        angle: node.angle,
+        x: centerX + distance * Math.cos(radians),
+        y: centerY + distance * Math.sin(radians)
+      };
+    });
+  }, []);
 
-  const handleLearnMore = () => {
-    featureSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  const navigateToRegister = () => navigate("/register");
+
+  const scrollToFeatures = () => {
+    document.getElementById("features")?.scrollIntoView({ behavior: "smooth" });
   };
 
   return (
-    <main className="relative min-h-screen overflow-hidden">
-      <div className="gradient-orb gradient-orb--one" />
-      <div className="gradient-orb gradient-orb--two" />
-      <div className="landing-grid-overlay" />
+    <main className="landing-page">
+      <nav className="landing-fixed-nav" id="landing-nav">
+        <div className="landing-nav-backdrop">
+          <div className="landing-shell landing-nav-inner">
+            <div className="landing-brand" onClick={() => navigate("/")}>MATCH3</div>
+            <button onClick={navigateToRegister} className="landing-button landing-button--primary">
+              Get Started
+            </button>
+          </div>
+        </div>
+      </nav>
 
-      <section className="relative z-10 mx-auto flex max-w-7xl flex-col px-6 pb-24 pt-16 md:px-10 lg:px-14 lg:pt-24">
-        <div className="grid gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
-          <div className="animate-rise">
-            <span className="inline-flex items-center rounded-full border border-primary/40 bg-primary/15 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-primary">
-              AI + Web3 Event Matchmaker
-            </span>
-            <h1 className="mt-6 text-5xl font-headline font-black leading-[1.05] text-white md:text-6xl xl:text-7xl">
-              Match High-Value Builders
-              <span className="block bg-gradient-to-r from-secondary via-white to-primary bg-clip-text text-transparent">
-                In Real Time
-              </span>
-            </h1>
-            <p className="mt-6 max-w-2xl text-base text-white/75 md:text-lg">
-              Launch a premium networking experience where event attendees connect by verified
-              wallet identity, shared interests, and startup goals.
+      <section className="landing-hero-section">
+        <div className="landing-video-background">
+          <video autoPlay muted loop playsInline className="landing-video">
+            <source src="https://cdn.dribbble.com/userupload/47426469/file/0ff6816e42475292f5cc195fd862e978.mp4" type="video/mp4" />
+          </video>
+          <div className="landing-video-dim" />
+        </div>
+
+        <div className="landing-orb landing-orb--one" />
+        <div className="landing-orb landing-orb--two" />
+
+        <div className="landing-shell landing-hero-grid">
+          <div className="landing-hero-copy">
+            <h1 className="landing-title">Find Your Perfect Match</h1>
+            <p className="landing-subtitle">AI-Powered Networking for Web3 Builders</p>
+            <p className="landing-description">
+              Discover meaningful connections in seconds using cutting-edge AI. MATCH3 analyzes
+              skills, goals, and values to connect you with the right people in the startup ecosystem.
             </p>
 
-            <div className="mt-8 flex flex-wrap gap-3">
-              <button
-                type="button"
-                onClick={handleGetStarted}
-                className="rounded-xl border border-primary/40 bg-primary px-6 py-3 text-sm font-semibold text-on-primary transition hover:-translate-y-0.5 hover:shadow-[0_12px_32px_rgba(176,127,241,0.55)] md:text-base"
-              >
+            <div className="landing-actions">
+              <button onClick={navigateToRegister} className="landing-button landing-button--primary landing-button--large">
                 Get Started
               </button>
-              <button
-                type="button"
-                onClick={handleLearnMore}
-                className="rounded-xl border border-white/30 bg-white/10 px-6 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/20 md:text-base"
-              >
+              <button onClick={scrollToFeatures} className="landing-button landing-button--ghost landing-button--large">
                 Learn More
               </button>
             </div>
+
+            <div className="landing-stats">
+              {HERO_STATS.map((stat, index) => (
+                <div key={stat.label} className="landing-stat-block">
+                  <div className="landing-stat-value">{stat.value}</div>
+                  <p className="landing-stat-label">{stat.label}</p>
+                  {index < HERO_STATS.length - 1 ? <div className="landing-stat-divider" /> : null}
+                </div>
+              ))}
+            </div>
           </div>
 
-          <div className="relative hidden min-h-[460px] lg:block">
-            <article className="floating-card glass-panel absolute left-0 top-8 w-72 rounded-2xl border border-white/15 p-5">
-              <p className="text-xs uppercase tracking-widest text-secondary">Live Matching</p>
-              <h3 className="mt-2 text-lg font-bold text-white">AI-powered matchmaking</h3>
-              <p className="mt-2 text-sm text-white/70">Builder profiles ranked by collaboration potential.</p>
-            </article>
+          <div className="landing-visual" id="3d-container">
+            <div className="landing-orbit-stage">
+              <div className="landing-center-node">
+                <span className="material-symbols-outlined">hub</span>
+              </div>
 
-            <article className="floating-card floating-card--delay glass-panel absolute right-0 top-36 w-72 rounded-2xl border border-white/15 p-5">
-              <p className="text-xs uppercase tracking-widest text-secondary">Smart Contract</p>
-              <h3 className="mt-2 text-lg font-bold text-white">On-chain profile registration</h3>
-              <p className="mt-2 text-sm text-white/70">Every attendee registers through wallet-signed transactions.</p>
-            </article>
+              {ORBIT_NODES.map((node) => (
+                <div
+                  key={node.angle}
+                  className="landing-orbit-node"
+                  style={
+                    {
+                      "--angle": `${node.angle}deg`,
+                      "--distance": "150px",
+                      "--delay": `${node.delay}s`
+                    } as React.CSSProperties
+                  }
+                >
+                  <div className={`landing-mini-card landing-mini-card--${node.accent}`}>
+                    <div className="landing-mini-avatar" />
+                    <div className="landing-mini-line landing-mini-line--wide" />
+                    <div className="landing-mini-line" />
+                  </div>
+                </div>
+              ))}
 
-            <article className="floating-card floating-card--delay-2 glass-panel absolute left-14 top-[19.5rem] w-72 rounded-2xl border border-white/15 p-5">
-              <p className="text-xs uppercase tracking-widest text-secondary">Event Trust Layer</p>
-              <h3 className="mt-2 text-lg font-bold text-white">Verifiable networking</h3>
-              <p className="mt-2 text-sm text-white/70">Create transparent and credibility-first event interactions.</p>
-            </article>
+              <svg className="landing-lines" viewBox="0 0 600 600" aria-hidden="true">
+                {connectionLines.map((line) => (
+                  <line
+                    key={line.angle}
+                    x1="300"
+                    y1="300"
+                    x2={line.x}
+                    y2={line.y}
+                    stroke="rgba(176, 127, 241, 0.28)"
+                    strokeWidth="2"
+                  />
+                ))}
+              </svg>
+            </div>
           </div>
         </div>
       </section>
 
-      <section ref={featureSectionRef} className="relative z-10 mx-auto max-w-7xl px-6 pb-24 md:px-10 lg:px-14">
-        <div className="grid gap-5 md:grid-cols-3">
-          {FEATURES.map((feature, index) => (
-            <article
-              key={feature.title}
-              className="glass-panel rounded-2xl border border-white/15 p-6 animate-rise"
-              style={{ animationDelay: `${index * 120}ms` }}
-            >
-              <p className="text-xs uppercase tracking-widest text-primary">Feature 0{index + 1}</p>
-              <h2 className="mt-3 text-2xl font-headline font-bold text-white">{feature.title}</h2>
-              <p className="mt-3 text-white/70">{feature.description}</p>
-            </article>
-          ))}
+      <section id="features" className="landing-features-section">
+        <div className="landing-shell">
+          <div className="landing-section-header">
+            <h2>How MATCH3 Works</h2>
+            <p>
+              Powered by advanced AI models to connect you with the right people, at the right time,
+              for the right reasons.
+            </p>
+          </div>
+
+          <div className="landing-features-grid">
+            {FEATURES.map((feature, index) => (
+              <article
+                key={feature.title}
+                className="landing-feature-card"
+                style={{ animationDelay: `${index * 0.12}s` }}
+              >
+                <div className="landing-feature-icon">
+                  <span className="material-symbols-outlined">{feature.icon}</span>
+                </div>
+                <h3>{feature.title}</h3>
+                <p>{feature.description}</p>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
+
+      <section className="landing-cta-section">
+        <div className="landing-shell landing-cta-inner">
+          <h2>Ready to Find Your Match?</h2>
+          <p>
+            Join innovators, builders, and founders already finding meaningful connections on MATCH3.
+          </p>
+          <button onClick={navigateToRegister} className="landing-button landing-button--primary landing-button--large">
+            Get Started for Free
+          </button>
+        </div>
+      </section>
+
+      <footer className="landing-footer">
+        <div className="landing-shell landing-footer-inner">
+          <div className="landing-brand">MATCH3</div>
+          <p>AI-Powered Networking for Web3 Builders</p>
+          <small>© 2026 MATCH3. All rights reserved.</small>
+        </div>
+      </footer>
     </main>
   );
 }
