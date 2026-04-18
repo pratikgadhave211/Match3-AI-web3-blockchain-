@@ -1,0 +1,61 @@
+<!doctype html>
+<html class="dark" lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>CURATOR | AI + Web3 Matchmaker</title>
+
+        <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&family=Inter:wght@300;400;500;600&display=swap"
+            rel="stylesheet"
+        />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+            rel="stylesheet"
+        />
+
+        <script id="tailwind-config">
+            tailwind.config = {
+                darkMode: "class",
+                theme: {
+                    extend: {
+                        colors: {
+                            primary: "#b07ff1",
+                            "on-primary": "#ffffff",
+                            secondary: "#ffcfb3",
+                            "on-secondary": "#000000",
+                            background: "transparent",
+                            "on-background": "#ffffff",
+                            surface: "rgba(11, 8, 28, 0.5)",
+                            "on-surface": "#ffffff",
+                            "surface-variant": "rgba(255, 255, 255, 0.05)",
+                            "on-surface-variant": "#b4b0c7",
+                            "surface-container-low": "rgba(255, 255, 255, 0.03)",
+                            "surface-container-high": "rgba(11, 8, 28, 0.8)",
+                            "secondary-container": "rgba(176, 127, 241, 0.2)",
+                            "on-secondary-container": "#e0d1ff",
+                            outline: "rgba(255, 255, 255, 0.1)"
+                        },
+                        borderRadius: {
+                            DEFAULT: "0.125rem",
+                            lg: "0.25rem",
+                            xl: "0.5rem",
+                            full: "0.75rem"
+                        },
+                        fontFamily: {
+                            headline: ["Manrope"],
+                            body: ["Inter"],
+                            label: ["Inter"]
+                        }
+                    }
+                }
+            };
+        </script>
+    </head>
+
+    <body class="theme-bg text-on-background font-body selection:bg-primary selection:text-on-primary overflow-x-hidden min-h-screen">
+        <div id="root"></div>
+        <script type="module" src="/src/main.tsx"></script>
+    </body>
+</html>
