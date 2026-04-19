@@ -46,6 +46,78 @@ def users_to_documents(users: list[dict[str, Any]]) -> list[str]:
     return [format_user_to_text(user) for user in users]
 
 
+def _norm_set(values: list[str]) -> set[str]:
+    return {str(value).strip().lower() for value in values if str(value).strip()}
+
+
+def _build_reason(current_user: dict[str, Any], candidate_user: dict[str, Any]) -> str:
+    current_interests = _norm_set(current_user.get("interests", []))
+    candidate_interests = _norm_set(candidate_user.get("interests", []))
+    current_goals = _norm_set(current_user.get("goals", []))
+    candidate_goals = _norm_set(candidate_user.get("goals", []))
+
+    shared_interests = sorted(current_interests & candidate_interests)
+    shared_goals = sorted(current_goals & candidate_goals)
+
+    if shared_interests and shared_goals:
+        return (
+            f"Shared interests ({', '.join(shared_interests[:2])}) and aligned goals "
+            f"({', '.join(shared_goals[:2])}) suggest a strong networking fit."
+        )
+
+    if shared_interests:
+        return f"Common interests ({', '.join(shared_interests[:3])}) make this connection relevant for collaboration."
+
+    if shared_goals:
+        return f"Similar goals ({', '.join(shared_goals[:3])}) indicate practical value from connecting at this event."
+
+    return "Profile signals are moderately related based on overall interests/goals overlap."
+
+
+def _heuristic_score(current_user: dict[str, Any], candidate_user: dict[str, Any]) -> int:
+    current_interests = _norm_set(current_user.get("interests", []))
+    candidate_interests = _norm_set(candidate_user.get("interests", []))
+    current_goals = _norm_set(current_user.get("goals", []))
+    candidate_goals = _norm_set(candidate_user.get("goals", []))
+
+    interest_overlap = len(current_interests & candidate_interests)
+    goal_overlap = len(current_goals & candidate_goals)
+
+    interest_score = (interest_overlap / max(len(current_interests), 1)) * 40
+    goal_score = (goal_overlap / max(len(current_goals), 1)) * 30
+
+    current_keywords = current_interests | current_goals
+    candidate_keywords = candidate_interests | candidate_goals
+    keyword_overlap = len(current_keywords & candidate_keywords)
+    keyword_score = (keyword_overlap / max(len(current_keywords), 1)) * 30
+
+    return int(round(min(100, interest_score + goal_score + keyword_score)))
+
+
+def _fallback_match(current_user: dict[str, Any], candidate_users: list[dict[str, Any]], reason: str) -> tuple[list[dict[str, Any]], Any]:
+    ranked = []
+    for candidate in candidate_users:
+        ranked.append(
+            {
+                "name": candidate.get("name", "Unknown"),
+                "score": _heuristic_score(current_user, candidate),
+                "reason": _build_reason(current_user, candidate),
+            }
+        )
+
+    ranked.sort(key=lambda item: (int(item.get("score") or 0), str(item.get("name") or "").lower()), reverse=True)
+    top_matches = ranked[:3]
+
+    return (
+        top_matches,
+        {
+            "mode": "heuristic-fallback",
+            "detail": reason,
+            "count": len(top_matches),
+        },
+    )
+
+
 def _same_identity(left: dict[str, Any], right: dict[str, Any]) -> bool:
     left_clean = clean_user_record(left)
     right_clean = clean_user_record(right)
@@ -90,8 +162,6 @@ def resolve_current_user(wallet: str | None = None, name: str | None = None) -> 
 
 
 def run_match(new_user: dict[str, Any]) -> tuple[list[dict[str, Any]], Any]:
-    rag_model = _load_rag_model()
-
     users = load_users()
     if not users:
         raise ValueError("No cached users available. Call /refresh-users first.")
@@ -102,17 +172,35 @@ def run_match(new_user: dict[str, Any]) -> tuple[list[dict[str, Any]], Any]:
     if not candidate_users:
         raise ValueError("No other users available to match against.")
 
+    rag_model: Any | None = None
+    rag_error: str | None = None
+    try:
+        rag_model = _load_rag_model()
+    except RuntimeError as exc:
+        rag_error = str(exc)
+
+    if rag_model is None:
+        return _fallback_match(cleaned_new_user, candidate_users, rag_error or "RAG model unavailable")
+
     documents = users_to_documents(candidate_users)
+    try:
+        if hasattr(rag_model, "match_users") and callable(rag_model.match_users):
+            raw_result = rag_model.match_users(cleaned_new_user, documents)
+            matches, parsed = _parse_match_output(raw_result)
+            if matches:
+                return matches, parsed
 
-    if hasattr(rag_model, "match_users") and callable(rag_model.match_users):
-        raw_result = rag_model.match_users(cleaned_new_user, documents)
-        return _parse_match_output(raw_result)
+        # Keep integration simple by using existing model.py functions.
+        vectorstore = rag_model.build_vectorstore(candidate_users)
+        if not vectorstore:
+            raise ValueError("Could not build vector store from users.json")
 
-    # Keep integration simple by using existing model.py functions.
-    vectorstore = rag_model.build_vectorstore(candidate_users)
-    if not vectorstore:
-        raise ValueError("Could not build vector store from users.json")
+        candidates = rag_model.retrieve_candidates(cleaned_new_user, vectorstore, k=3)
+        raw_result = rag_model.find_best_match(cleaned_new_user, candidates)
+        matches, parsed = _parse_match_output(raw_result)
+        if matches:
+            return matches, parsed
 
-    candidates = rag_model.retrieve_candidates(cleaned_new_user, vectorstore, k=3)
-    raw_result = rag_model.find_best_match(cleaned_new_user, candidates)
-    return _parse_match_output(raw_result)
+        return _fallback_match(cleaned_new_user, candidate_users, "RAG returned empty match output")
+    except Exception as exc:  # noqa: BLE001
+        return _fallback_match(cleaned_new_user, candidate_users, f"RAG pipeline failed: {exc}")
