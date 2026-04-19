@@ -18,5 +18,57 @@
     "goals": [
       "Join team"
     ]
+  },
+  {
+    "wallet": "0x4A61d17F5dE2f0A3d9B8c7E1f4A3C2B1d0E9F8A7",
+    "name": "Neha Kulkarni",
+    "interests": [
+      "AI",
+      "product design",
+      "startups"
+    ],
+    "goals": [
+      "find cofounder",
+      "build MVP"
+    ]
+  },
+  {
+    "wallet": "0x9B72a2cD0f31B7a5C6d4e3F2A1b0C9D8E7F6A5B4",
+    "name": "Rahul Patil",
+    "interests": [
+      "web3",
+      "smart contracts",
+      "security"
+    ],
+    "goals": [
+      "join hackathon team",
+      "audit dapps"
+    ]
+  },
+  {
+    "wallet": "0x1C3d5E7f9A2B4c6D8e0F1A3B5c7D9E1F2A4B6C8D",
+    "name": "Ananya Deshmukh",
+    "interests": [
+      "machine learning",
+      "data science",
+      "community"
+    ],
+    "goals": [
+      "mentor juniors",
+      "collaborate on AI projects"
+    ]
+  },
+  {
+    "wallet": "0x7E5d3C1b9A8F6e4D2c0B1A3f5E7D9C2B4A6F8E0D",
+    "name": "Vikram Jadhav",
+    "interests": [
+      "DeFi",
+      "tokenomics",
+      "growth"
+    ],
+    "goals": [
+      "network with investors",
+      "launch pilot"
+    ]
   }
 ]
