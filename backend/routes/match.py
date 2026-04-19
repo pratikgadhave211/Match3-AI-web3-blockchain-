@@ -117,12 +117,18 @@ def _run_match(new_user: dict[str, Any]) -> tuple[list[dict[str, Any]], Any]:
     if not vectorstore:
         raise ValueError("Could not build vector store from users.json")
 
-    candidates = rag_model.retrieve_candidates(cleaned_new_user, vectorstore, k=3)
+    # Use a smaller retrieval window for small user pools to avoid noisy retrieval.
+    retrieval_k = 1 if len(candidate_users) <= 3 else 3
+    candidates = rag_model.retrieve_candidates(cleaned_new_user, vectorstore, k=retrieval_k)
     raw_result = rag_model.find_best_match(cleaned_new_user, candidates)
     matches, parsed = _parse_match_output(raw_result)
 
     if not matches:
         raise ValueError("RAG returned empty or invalid match output.")
+
+    if isinstance(parsed, dict):
+        parsed.setdefault("retrieval_k", retrieval_k)
+        parsed.setdefault("candidate_count", len(candidate_users))
 
     return matches, parsed
 

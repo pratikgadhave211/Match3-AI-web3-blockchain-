@@ -33,6 +33,26 @@ interface ApiMatch {
   reason?: string;
 }
 
+function resolveRawError(raw: unknown): string {
+  if (typeof raw === "string" && raw.trim()) {
+    return raw.trim();
+  }
+
+  if (typeof raw === "object" && raw !== null) {
+    const record = raw as Record<string, unknown>;
+
+    if (typeof record.detail === "string" && record.detail.trim()) {
+      return record.detail.trim();
+    }
+
+    if (typeof record.error === "string" && record.error.trim()) {
+      return record.error.trim();
+    }
+  }
+
+  return "";
+}
+
 function toUiMatch(match: ApiMatch): Match {
   return {
     name: match.name,
@@ -180,6 +200,12 @@ export default function Matches({
         name: nameFromSession || undefined
       });
 
+      const resolvedMatches = response.matches ?? [];
+      if (resolvedMatches.length === 0) {
+        const rawError = resolveRawError(response.raw);
+        throw new Error(rawError || "RAG returned 0 matches. Backend did not return usable results.");
+      }
+
       if (response.current_user) {
         const resolvedUser = response.current_user;
         setCurrentUser(resolvedUser);
@@ -195,8 +221,8 @@ export default function Matches({
         );
       }
 
-      setApiMatches(response.matches ?? []);
-      onLiveMatchesChange((response.matches ?? []).map((match) => toUiMatch(match)));
+      setApiMatches(resolvedMatches);
+      onLiveMatchesChange(resolvedMatches.map((match) => toUiMatch(match)));
       setToastMessage("Current user matching completed");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to run matching.";
@@ -503,7 +529,11 @@ export default function Matches({
               {isMatching ? "Matching..." : "Run Match"}
             </button>
 
-            {apiError ? <span className="text-sm text-red-300">{apiError}</span> : null}
+            {apiError ? (
+              <div className="w-full rounded-xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-200 whitespace-pre-wrap">
+                RAG Error: {apiError}
+              </div>
+            ) : null}
           </div>
         </div>
 

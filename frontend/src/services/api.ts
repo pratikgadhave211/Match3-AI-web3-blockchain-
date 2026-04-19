@@ -6,6 +6,9 @@ const isLocalHost =
 const PROD_BACKEND_FALLBACK = "https://match3-backend-hjc0.onrender.com";
 
 const API_BASE_URL = (envBaseUrl || (isLocalHost ? "http://127.0.0.1:8000" : PROD_BACKEND_FALLBACK)).replace(/\/$/, "");
+const API_TIMEOUT_MS = Number(
+  (import.meta as ImportMeta & { env?: Record<string, string | undefined> }).env?.VITE_API_TIMEOUT_MS ?? "30000"
+);
 
 export interface ApiResult<T> {
   data: T;
@@ -56,13 +59,25 @@ export interface GenerateIntroResponse {
 }
 
 async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
+  const abortController = new AbortController();
+  const timeoutId = globalThis.setTimeout(() => abortController.abort(), API_TIMEOUT_MS);
+
+  if (init?.signal) {
+    if (init.signal.aborted) {
+      abortController.abort();
+    } else {
+      init.signal.addEventListener("abort", () => abortController.abort(), { once: true });
+    }
+  }
+
   try {
     const response = await fetch(`${API_BASE_URL}${path}`, {
       headers: {
         "Content-Type": "application/json",
         ...(init?.headers ?? {})
       },
-      ...init
+      ...init,
+      signal: abortController.signal
     });
 
     const rawText = await response.text();
@@ -97,14 +112,22 @@ async function apiRequest<T>(path: string, init?: RequestInit): Promise<T> {
 
     return (payload ?? ({} as T)) as T;
   } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new Error(
+        `Request timed out after ${Math.round(API_TIMEOUT_MS / 1000)}s for ${path}. Backend may be down or cold-starting.`
+      );
+    }
+
     if (error instanceof TypeError) {
-      throw new Error(`Failed to fetch. Ensure backend is running at ${API_BASE_URL} and CORS is enabled.`);
+      throw new Error(`Failed to fetch ${path}. Ensure backend is running at ${API_BASE_URL} and CORS is enabled.`);
     }
 
     if (error instanceof Error) {
       throw error;
     }
     throw new Error("Network error: backend is unreachable.");
+  } finally {
+    globalThis.clearTimeout(timeoutId);
   }
 }
 
