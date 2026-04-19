@@ -14,7 +14,7 @@ def _load_rag_model() -> Any:
         return rag_model
     except Exception as exc:  # noqa: BLE001
         raise RuntimeError(
-            "RAG model initialization failed. Ensure required model dependencies and env vars are configured."
+            f"RAG model initialization failed: {exc.__class__.__name__}: {exc}"
         ) from exc
 
 
