@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from typing import Any
 
 from fastapi import APIRouter, HTTPException
@@ -10,6 +11,13 @@ from backend.models.schemas import MatchCurrentUserRequest, MatchItem, MatchResp
 from backend.utils.helpers import clean_user_record
 
 router = APIRouter(tags=["match"])
+
+
+_DEFAULT_REASON = (
+    "This recommendation is based on overlapping interests and compatible goals, then ranked with a resilient "
+    "fallback scorer when inference is unavailable, so you still receive a stable, practical and relevant "
+    "networking match today."
+)
 
 
 def _load_rag_model() -> Any:
@@ -35,23 +43,111 @@ def _load_users() -> list[dict[str, Any]]:
 
 
 def _parse_match_output(raw_output: Any) -> tuple[list[dict[str, Any]], Any]:
+    def _normalize_reason(reason_value: Any) -> str:
+        reason = " ".join(str(reason_value or "").split())
+        if not reason:
+            reason = _DEFAULT_REASON
+
+        words = reason.split()
+        if len(words) < 30:
+            reason = f"{reason} {_DEFAULT_REASON}"
+            words = reason.split()
+
+        if len(words) > 40:
+            reason = " ".join(words[:40])
+
+        return reason
+
+    def _to_score(value: Any) -> int | None:
+        if value is None:
+            return None
+
+        try:
+            score = int(round(float(value)))
+        except (TypeError, ValueError):
+            return None
+
+        return max(0, min(100, score))
+
+    def _normalize_matches(raw_matches: Any) -> list[dict[str, Any]]:
+        if not isinstance(raw_matches, list):
+            return []
+
+        cleaned: list[dict[str, Any]] = []
+        for item in raw_matches:
+            if not isinstance(item, dict):
+                continue
+
+            name = str(item.get("name") or "").strip()
+            if not name:
+                continue
+
+            cleaned.append(
+                {
+                    "name": name,
+                    "score": _to_score(item.get("score")),
+                    "reason": _normalize_reason(item.get("reason")),
+                }
+            )
+
+        cleaned.sort(key=lambda entry: int(entry["score"]) if isinstance(entry.get("score"), int) else -1, reverse=True)
+        return cleaned[:3]
+
+    def _extract_json_from_text(raw_text: str) -> Any:
+        text = raw_text.strip()
+        if not text:
+            return None
+
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError:
+            pass
+
+        fenced_match = re.search(r"```(?:json)?\s*(.*?)\s*```", text, re.IGNORECASE | re.DOTALL)
+        if fenced_match:
+            fenced = fenced_match.group(1).strip()
+            try:
+                return json.loads(fenced)
+            except json.JSONDecodeError:
+                pass
+
+        object_start = text.find("{")
+        object_end = text.rfind("}")
+        if object_start != -1 and object_end > object_start:
+            try:
+                return json.loads(text[object_start : object_end + 1])
+            except json.JSONDecodeError:
+                pass
+
+        list_start = text.find("[")
+        list_end = text.rfind("]")
+        if list_start != -1 and list_end > list_start:
+            try:
+                return json.loads(text[list_start : list_end + 1])
+            except json.JSONDecodeError:
+                pass
+
+        return None
+
     if isinstance(raw_output, dict):
-        matches = raw_output.get("matches", [])
-        if isinstance(matches, list):
-            return [item for item in matches if isinstance(item, dict)][:3], raw_output
+        matches = _normalize_matches(raw_output.get("matches", []))
+        if matches:
+            return matches, raw_output
         return [], raw_output
 
     if isinstance(raw_output, list):
-        return [item for item in raw_output if isinstance(item, dict)][:3], raw_output
+        return _normalize_matches(raw_output), raw_output
 
     if isinstance(raw_output, str):
-        try:
-            parsed = json.loads(raw_output)
-        except json.JSONDecodeError:
+        parsed = _extract_json_from_text(raw_output)
+        if parsed is None:
             return [], raw_output
 
-        if isinstance(parsed, dict) and isinstance(parsed.get("matches"), list):
-            return [item for item in parsed["matches"] if isinstance(item, dict)][:3], parsed
+        if isinstance(parsed, dict):
+            return _normalize_matches(parsed.get("matches", [])), parsed
+
+        if isinstance(parsed, list):
+            return _normalize_matches(parsed), parsed
 
         return [], parsed
 

@@ -133,8 +133,9 @@ def _heuristic_rank(new_user: dict[str, Any], candidates: list[str]) -> dict[str
                 "name": candidate.get("name") or "Unknown",
                 "score": score,
                 "reason": (
-                    "Matched using fallback scoring based on interest and goal overlap. "
-                    "This result avoids request failure when model inference is unavailable."
+                    "This recommendation is based on overlapping interests and compatible goals, then ranked with "
+                    "a resilient fallback scorer when inference is unavailable, so you still receive a stable, "
+                    "practical and relevant networking match today."
                 ),
             }
         )
@@ -265,9 +266,15 @@ Top Retrieved Candidates:
 Return only valid JSON in this shape:
 {{
   "matches": [
-    {{"name": "candidate", "score": 80, "reason": "short reason"}}
+        {{"name": "candidate", "score": 80, "reason": "Reason must be 30 to 40 words and clearly explain the ranking based on interests, goals, and retrieval relevance."}}
   ]
 }}
+
+Rules:
+- Return top matches ordered by highest score first.
+- Score must be an integer from 0 to 100.
+- Each reason must be 30 to 40 words.
+- Return only JSON (no markdown or extra text).
 """
 
     try:
