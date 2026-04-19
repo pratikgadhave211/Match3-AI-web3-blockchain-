@@ -33,14 +33,6 @@ export default function Sidebar({ activeView, showView }: SidebarProps) {
           </button>
         ))}
       </nav>
-      <div className="mt-auto p-4 rounded-xl bg-surface-container-highest flex flex-col gap-3">
-        <p className="text-xs text-on-surface-variant leading-relaxed">
-          Upgrade to unlock deeper synergy analysis.
-        </p>
-        <button className="w-full py-2 bg-primary/20 text-primary border border-primary/30 rounded font-bold text-xs uppercase tracking-tighter hover:bg-primary/30 transition-all btn-interact">
-          Pro Access
-        </button>
-      </div>
     </aside>
   );
 }

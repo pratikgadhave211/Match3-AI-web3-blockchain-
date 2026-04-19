@@ -101,7 +101,14 @@ export default function Matches({
     [apiMatches]
   );
 
-  const topMatch = liveMatches[0] ?? null;
+  const topMatch = useMemo(
+    () =>
+      liveMatches.reduce<Match | null>(
+        (best, current) => (!best || current.matchScore > best.matchScore ? current : best),
+        null
+      ),
+    [liveMatches]
+  );
 
   useEffect(() => {
     let isCancelled = false;
@@ -200,7 +207,7 @@ export default function Matches({
         name: nameFromSession || undefined
       });
 
-      const resolvedMatches = response.matches ?? [];
+      const resolvedMatches = [...(response.matches ?? [])].sort((left, right) => (right.score ?? -1) - (left.score ?? -1));
       if (resolvedMatches.length === 0) {
         const rawError = resolveRawError(response.raw);
         throw new Error(rawError || "RAG returned 0 matches. Backend did not return usable results.");

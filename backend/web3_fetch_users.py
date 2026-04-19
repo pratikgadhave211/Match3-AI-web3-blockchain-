@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, List
@@ -10,12 +11,12 @@ from web3 import Web3
 # -----------------------------
 # Contract configuration
 # -----------------------------
-CONTRACT_ADDRESS = "0x1D67D3511BEDd04208D419fcf559CC5f5975edEf"
-EXPECTED_CHAIN_ID = "11155111"
-NETWORK_NAME = "Sepolia Test Network"
-RPC_URL = "https://sepolia.infura.io/v3/e0147d99ceeb41e1835d2e09f4d4ce27"
-CURRENCY_SYMBOL = "ETH"
-BLOCK_EXPLORER_URL = "https://sepolia.etherscan.io"
+CONTRACT_ADDRESS = os.getenv("CONTRACT_ADDRESS", "0xeEdEd492DF09b3f2964c1A6d8927E2883c1994b8")
+EXPECTED_CHAIN_ID = os.getenv("EXPECTED_CHAIN_ID", "666888")
+NETWORK_NAME = os.getenv("NETWORK_NAME", "Hela Official Runtime Testnet")
+RPC_URL = os.getenv("RPC_URL", "https://testnet-rpc.helachain.com")
+CURRENCY_SYMBOL = os.getenv("CURRENCY_SYMBOL", "HLUSD")
+BLOCK_EXPLORER_URL = os.getenv("EXPLORER_URL", "https://testnet-blockexplorer.helachain.com")
 
 CONTRACT_ABI: List[dict[str, Any]] = [
     {
@@ -191,7 +192,7 @@ def show_popup(title: str, message: str) -> None:
 def fetch_blockchain_users_structured() -> List[dict[str, Any]]:
     web3 = Web3(Web3.HTTPProvider(RPC_URL))
     if not web3.is_connected():
-        raise RuntimeError("Could not connect to Sepolia RPC")
+        raise RuntimeError("Could not connect to Hela Testnet RPC")
 
     chain_id = str(web3.eth.chain_id)
     if chain_id != EXPECTED_CHAIN_ID:

@@ -1,8 +1,10 @@
 import type { ConnectedWallet } from "../types";
 import {
+  CURRENCY_SYMBOL,
   EXPECTED_CHAIN_ID,
   EXPECTED_CHAIN_ID_HEX,
   EXPLORER_BASE_URL,
+  NATIVE_CURRENCY_NAME,
   NETWORK_NAME,
   RPC_URL
 } from "../utils/constants";
@@ -80,7 +82,7 @@ export async function connectMetaMask(): Promise<ConnectedWallet> {
   };
 }
 
-export async function switchToSepoliaNetwork(): Promise<void> {
+export async function switchToExpectedNetwork(): Promise<void> {
   const injected = getInjectedProvider();
   if (!injected) {
     throw new Error("MetaMask is not installed.");
@@ -104,7 +106,7 @@ export async function switchToSepoliaNetwork(): Promise<void> {
         {
           chainId: EXPECTED_CHAIN_ID_HEX,
           chainName: NETWORK_NAME,
-          nativeCurrency: { name: "Sepolia ETH", symbol: "ETH", decimals: 18 },
+          nativeCurrency: { name: NATIVE_CURRENCY_NAME, symbol: CURRENCY_SYMBOL, decimals: 18 },
           rpcUrls: [RPC_URL],
           blockExplorerUrls: [EXPLORER_BASE_URL]
         }

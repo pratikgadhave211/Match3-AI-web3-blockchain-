@@ -5,7 +5,7 @@ import type { ConnectedWallet, TxUiState, WalletUiState } from "../types";
 import { CONTRACT_ADDRESS, NETWORK_NAME, RPC_URL } from "../utils/constants";
 import { shortAddress } from "../utils/format";
 import { fetchUserProfile, isContractDeployed, registerUser } from "../services/contract";
-import { connectMetaMask, switchToSepoliaNetwork } from "../services/wallet";
+import { connectMetaMask, switchToExpectedNetwork } from "../services/wallet";
 import { hasMetaMask } from "../services/web3";
 
 function parseCommaSeparatedValues(input: string): string[] {
@@ -36,8 +36,8 @@ function getErrorMessage(error: unknown): string {
 
     if (errorCode === -32603 && combinedMessage.toLowerCase().includes("failed to fetch")) {
       return (
-        "MetaMask could not reach the active Sepolia RPC while sending the transaction. " +
-        `Open MetaMask network settings and set Sepolia RPC to ${RPC_URL}, then retry.`
+        `MetaMask could not reach the active ${NETWORK_NAME} RPC while sending the transaction. ` +
+        `Open MetaMask network settings and set ${NETWORK_NAME} RPC to ${RPC_URL}, then retry.`
       );
     }
   }
@@ -121,8 +121,8 @@ export default function RegisterOnChainPage() {
     } catch {
       setRpcState("unreachable");
       setErrorMessage(
-        "MetaMask is connected, but its active Sepolia RPC is unreachable. " +
-          `In MetaMask → Settings → Networks → Sepolia, set the RPC URL to ${RPC_URL}, then retry.`
+        `MetaMask is connected, but its active ${NETWORK_NAME} RPC is unreachable. ` +
+          `In MetaMask → Settings → Networks → ${NETWORK_NAME}, set the RPC URL to ${RPC_URL}, then retry.`
       );
       return false;
     }
@@ -146,7 +146,7 @@ export default function RegisterOnChainPage() {
 
       if (!connected.isExpectedNetwork) {
         setWalletState("wrong_network");
-        setErrorMessage("Please switch to Sepolia Test Network");
+        setErrorMessage(`Please switch to ${NETWORK_NAME}`);
         return;
       }
 
@@ -166,13 +166,13 @@ export default function RegisterOnChainPage() {
     setRpcState("unknown");
 
     try {
-      await switchToSepoliaNetwork();
+      await switchToExpectedNetwork();
       const connected = await connectMetaMask();
       setWallet(connected);
 
       if (!connected.isExpectedNetwork) {
         setWalletState("wrong_network");
-        setErrorMessage("Please switch to Sepolia Test Network");
+        setErrorMessage(`Please switch to ${NETWORK_NAME}`);
         return;
       }
 
@@ -199,7 +199,7 @@ export default function RegisterOnChainPage() {
 
     if (!wallet.isExpectedNetwork) {
       setWalletState("wrong_network");
-      setErrorMessage("Please switch to Sepolia Test Network");
+      setErrorMessage(`Please switch to ${NETWORK_NAME}`);
       return;
     }
 
@@ -282,7 +282,7 @@ export default function RegisterOnChainPage() {
       <section className="mx-auto max-w-4xl animate-rise">
         <div className="glass-panel rounded-3xl border border-white/15 p-7 md:p-10">
           <span className="inline-flex items-center rounded-full border border-primary/40 bg-primary/15 px-4 py-1 text-xs font-semibold uppercase tracking-widest text-primary">
-            Sepolia Registration
+            {NETWORK_NAME} Registration
           </span>
           <h1 className="mt-5 text-3xl font-headline font-black text-white md:text-5xl">
             Register Your Profile On-Chain
@@ -384,7 +384,7 @@ export default function RegisterOnChainPage() {
 
             {walletState === "wrong_network" ? (
               <div className="status-pill status-pill--warning">
-                Please switch to Sepolia Test Network
+                Please switch to {NETWORK_NAME}
               </div>
             ) : null}
 
@@ -395,7 +395,7 @@ export default function RegisterOnChainPage() {
                 disabled={isSwitchingNetwork}
                 className="w-full rounded-xl border border-yellow-300/50 bg-yellow-500/15 px-4 py-2 text-sm font-semibold text-yellow-100 transition hover:bg-yellow-500/25 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {isSwitchingNetwork ? "Switching network..." : "Switch to Sepolia"}
+                {isSwitchingNetwork ? "Switching network..." : `Switch to ${NETWORK_NAME}`}
               </button>
             ) : null}
 

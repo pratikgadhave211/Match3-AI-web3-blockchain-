@@ -4,7 +4,7 @@ import type { ConnectedWallet, OnChainUser, WalletUiState } from "../types";
 import { NETWORK_NAME, RPC_URL } from "../utils/constants";
 import { formatUnixTimestamp, shortAddress } from "../utils/format";
 import { fetchAllProfiles, fetchUserProfile, isContractDeployed } from "../services/contract";
-import { connectMetaMask, switchToSepoliaNetwork } from "../services/wallet";
+import { connectMetaMask, switchToExpectedNetwork } from "../services/wallet";
 import { hasMetaMask } from "../services/web3";
 
 function getErrorMessage(error: unknown): string {
@@ -29,13 +29,13 @@ function getErrorMessage(error: unknown): string {
     if (errorCode === -32603 && combinedMessage.toLowerCase().includes("failed to fetch")) {
       return (
         "Wallet RPC is unreachable. " +
-        `Open MetaMask → Sepolia settings and set RPC to ${RPC_URL}, then retry.`
+        `Open MetaMask → ${NETWORK_NAME} settings and set RPC to ${RPC_URL}, then retry.`
       );
     }
   }
 
   if (combinedMessage.toLowerCase().includes("failed to fetch")) {
-    return `RPC request failed. If you are using MetaMask, set Sepolia RPC to ${RPC_URL} and retry.`;
+    return `RPC request failed. If you are using MetaMask, set ${NETWORK_NAME} RPC to ${RPC_URL} and retry.`;
   }
 
   if (rawErrorMessage) return rawErrorMessage;
@@ -135,7 +135,7 @@ export default function MatchmakingPage() {
     setIsSwitchingNetwork(true);
 
     try {
-      await switchToSepoliaNetwork();
+      await switchToExpectedNetwork();
       const connected = await connectMetaMask();
       setWallet(connected);
 
@@ -228,7 +228,7 @@ export default function MatchmakingPage() {
           Load On-Chain Attendees
         </h1>
         <p className="mt-3 max-w-2xl text-base text-white/75 md:text-lg">
-          Use the read-only RPC to confirm that registration data is available on Sepolia.
+          Use the read-only RPC to confirm that registration data is available on {NETWORK_NAME}.
         </p>
 
         <div className="mt-7 rounded-2xl border border-white/15 bg-black/20 p-5">
@@ -252,7 +252,7 @@ export default function MatchmakingPage() {
                 disabled={isSwitchingNetwork}
                 className="rounded-xl border border-yellow-300/50 bg-yellow-500/15 px-5 py-3 text-sm font-semibold text-yellow-100 transition hover:bg-yellow-500/25 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {isSwitchingNetwork ? "Switching network..." : "Switch to Sepolia"}
+                {isSwitchingNetwork ? "Switching network..." : `Switch to ${NETWORK_NAME}`}
               </button>
             ) : null}
           </div>
@@ -264,7 +264,7 @@ export default function MatchmakingPage() {
           ) : null}
 
           {walletState === "wrong_network" ? (
-            <div className="mt-4 status-pill status-pill--warning">Wrong network. Switch to Sepolia.</div>
+            <div className="mt-4 status-pill status-pill--warning">Wrong network. Switch to {NETWORK_NAME}.</div>
           ) : null}
 
           {errorMessage ? <div className="mt-4 status-pill status-pill--danger">{errorMessage}</div> : null}

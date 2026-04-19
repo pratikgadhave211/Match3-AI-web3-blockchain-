@@ -26,22 +26,6 @@ export default function Header({ activeView, showView, handleAction }: HeaderPro
             </button>
           ))}
         </nav>
-        <div className="flex items-center gap-6 ml-4">
-          <button
-            type="button"
-            onClick={(event) => handleAction(event, "Login")}
-            className="text-white hover:text-white/80 transition-colors font-bold text-sm"
-          >
-            Log In
-          </button>
-          <button
-            type="button"
-            onClick={(event) => handleAction(event, "Registration")}
-            className="px-6 py-2 bg-black text-white font-headline font-bold rounded-full text-sm shadow-[0_0_15px_rgba(176,127,241,0.5)] btn-interact"
-          >
-            Join Now
-          </button>
-        </div>
       </div>
     </header>
   );

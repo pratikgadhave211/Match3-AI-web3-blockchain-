@@ -1,9 +1,18 @@
-export const RPC_URL = "https://sepolia.infura.io/v3/e0147d99ceeb41e1835d2e09f4d4ce27";
-export const CONTRACT_ADDRESS = "0x1D67D3511BEDd04208D419fcf559CC5f5975edEf";
-export const EXPECTED_CHAIN_ID = 11155111;
-export const EXPECTED_CHAIN_ID_HEX = "0xaa36a7";
-export const NETWORK_NAME = "Sepolia Test Network";
-export const EXPLORER_BASE_URL = "https://sepolia.etherscan.io";
+const env = (import.meta as ImportMeta & { env?: Record<string, string | undefined> }).env ?? {};
+
+const configuredChainId = Number(env.VITE_EXPECTED_CHAIN_ID ?? "666888");
+
+export const RPC_URL = env.VITE_RPC_URL || "https://testnet-rpc.helachain.com";
+export const CONTRACT_ADDRESS =
+  env.VITE_CONTRACT_ADDRESS || "0xeEdEd492DF09b3f2964c1A6d8927E2883c1994b8";
+export const EXPECTED_CHAIN_ID = Number.isFinite(configuredChainId) ? configuredChainId : 666888;
+export const EXPECTED_CHAIN_ID_HEX =
+  env.VITE_EXPECTED_CHAIN_ID_HEX || `0x${EXPECTED_CHAIN_ID.toString(16)}`;
+export const NETWORK_NAME = env.VITE_NETWORK_NAME || "Hela Official Runtime Testnet";
+export const CURRENCY_SYMBOL = env.VITE_CURRENCY_SYMBOL || "HLUSD";
+export const NATIVE_CURRENCY_NAME = env.VITE_NATIVE_CURRENCY_NAME || "Hela USD";
+export const EXPLORER_BASE_URL =
+  env.VITE_EXPLORER_BASE_URL || "https://testnet-blockexplorer.helachain.com";
 
 export const CONTRACT_ABI = [
   {
