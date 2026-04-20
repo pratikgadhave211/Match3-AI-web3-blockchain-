@@ -30,12 +30,37 @@ _chat_model: Any | None = None
 _llm_init_attempted = False
 
 
+def _dedupe_preserve_order(values: list[str]) -> list[str]:
+    seen: set[str] = set()
+    result: list[str] = []
+    for value in values:
+        if value and value not in seen:
+            seen.add(value)
+            result.append(value)
+    return result
+
+
+def _expand_compound_terms(raw_value: str) -> list[str]:
+    normalized = " ".join(raw_value.strip().lower().split())
+    if not normalized:
+        return []
+
+    # Split common combined skill separators like "web3+ai", "rust / wasm", "a|b".
+    parts = [" ".join(part.strip().split()) for part in re.split(r"[,/+|&]+", normalized) if part.strip()]
+    return _dedupe_preserve_order(parts)
+
+
 def _normalize_list(values: Any) -> list[str]:
+    normalized_values: list[str] = []
+
     if isinstance(values, list):
-        return [str(value).strip().lower() for value in values if str(value).strip()]
+        for value in values:
+            normalized_values.extend(_expand_compound_terms(str(value)))
+        return _dedupe_preserve_order(normalized_values)
 
     if isinstance(values, str):
-        return [part.strip().lower() for part in values.split(",") if part.strip()]
+        normalized_values.extend(_expand_compound_terms(values))
+        return _dedupe_preserve_order(normalized_values)
 
     return []
 
@@ -122,21 +147,64 @@ def _extract_json_payload(text: str) -> Any | None:
 def _heuristic_rank(new_user: dict[str, Any], candidates: list[str]) -> dict[str, Any]:
     ranked: list[dict[str, Any]] = []
 
+    normalized_new_user = _normalize_user(new_user)
+
+    def _format_terms(values: set[str]) -> str:
+        ordered = sorted(values)
+        if not ordered:
+            return ""
+        if len(ordered) == 1:
+            return ordered[0]
+        return ", ".join(ordered[:-1]) + f" and {ordered[-1]}"
+
+    def _build_reason(candidate: dict[str, Any], shared_interests: set[str], shared_goals: set[str]) -> str:
+        name = str(candidate.get("name") or "This profile")
+
+        if shared_interests and shared_goals:
+            return (
+                f"{name} is prioritized because you both align on interests in {_format_terms(shared_interests)} and also share goals around "
+                f"{_format_terms(shared_goals)}. This combined overlap suggests high collaboration fit and faster progress in event networking conversations."
+            )
+
+        if shared_interests:
+            return (
+                f"{name} is recommended due to strong interest overlap in {_format_terms(shared_interests)}. Even with different immediate goals, this shared "
+                "technical focus can create practical collaboration opportunities and meaningful discussion paths during networking sessions."
+            )
+
+        if shared_goals:
+            return (
+                f"{name} is recommended because your goals overlap around {_format_terms(shared_goals)}. While interests differ, aligned outcomes improve the chance "
+                "of productive conversations, clearer follow-up intent, and useful team or startup collaboration after the event."
+            )
+
+        return (
+            f"{name} is included as a relevant nearby profile from retrieval results. Direct overlap is limited, but complementary interests and goals can still "
+            "unlock cross-domain collaboration, broaden perspective, and create practical networking value beyond exact keyword matches."
+        )
+
     for candidate_text in candidates:
         candidate = _parse_candidate_text(candidate_text)
+        candidate_interests = set(_normalize_list(candidate.get("interests")))
+        candidate_goals = set(_normalize_list(candidate.get("goals")))
+
+        shared_interests = set(_normalize_list(normalized_new_user.get("interests"))) & candidate_interests
+        shared_goals = set(_normalize_list(normalized_new_user.get("goals"))) & candidate_goals
+
         overlap_score = _token_overlap_score(new_user, candidate)
         score = int(round(55 + overlap_score * 40))
+
+        # Encourage clear separation among low-overlap candidates while preserving bounds.
+        if not shared_interests and not shared_goals:
+            score -= 5
+
         score = max(0, min(100, score))
 
         ranked.append(
             {
                 "name": candidate.get("name") or "Unknown",
                 "score": score,
-                "reason": (
-                    "This recommendation is based on overlapping interests and compatible goals, then ranked with "
-                    "a resilient fallback scorer when inference is unavailable, so you still receive a stable, "
-                    "practical and relevant networking match today."
-                ),
+                "reason": _build_reason(candidate, shared_interests, shared_goals),
             }
         )
 
