@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
-import Header from "../components/layout/Header";
 import MobileNav from "../components/layout/MobileNav";
 import Sidebar from "../components/layout/Sidebar";
 import Modal from "../components/ui/Modal";
@@ -367,9 +366,7 @@ export default function DashboardPage() {
       <MobileNav activeView={activeView} showView={showView} />
 
       <div className="relative mx-auto w-full max-w-7xl lg:pl-64 pb-24 md:pb-10">
-        <Header activeView={activeView} showView={showView} handleAction={handleAction} />
-
-        <section className="mt-8 glass-panel rounded-3xl border border-white/10 p-6 md:p-10">
+        <section className="glass-panel rounded-3xl border border-white/10 p-6 md:p-10">
           {viewContent()}
         </section>
       </div>

@@ -1,6 +1,12 @@
 from __future__ import annotations
 
 import os
+import sys
+
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(CURRENT_DIR)
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -23,6 +29,8 @@ def _get_allowed_origins() -> list[str]:
         "http://127.0.0.1:5173",
         "http://localhost:4173",
         "http://127.0.0.1:4173",
+        "https://match3-frontend-three.vercel.app",
+        "https://match3-frontend.vercel.app",
     ]
 
     configured = os.getenv("FRONTEND_ORIGIN", "").strip()
@@ -53,3 +61,6 @@ def root() -> dict[str, object]:
         "message": "Backend is live",
         "settings": get_runtime_settings(),
     }
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="127.0.0.1", port=8000)

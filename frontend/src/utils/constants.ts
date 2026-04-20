@@ -90,12 +90,6 @@ export const SKILL_SUGGESTIONS = [
   "Security"
 ];
 
-export const HEADER_NAV: Array<{ id: "team" | "solutions" | "blog"; label: string }> = [
-  { id: "team", label: "Your Team" },
-  { id: "solutions", label: "Solutions" },
-  { id: "blog", label: "Blog" }
-];
-
 export const SIDEBAR_NAV: Array<{ id: "home" | "matches" | "connections" | "saved" | "settings"; icon: string; label: string }> = [
   { id: "home", icon: "dashboard", label: "Dashboard" },
   { id: "matches", icon: "auto_awesome", label: "Matches" },
